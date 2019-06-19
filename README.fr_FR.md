@@ -77,4 +77,8 @@ avec la découverte de [Cilium](https://cilium.io/)
   - Cilium : https://cilium.io/
   - Calico : https://www.projectcalico.org/tigera-adds-ebpf-support-to-calico/
   - Tcpdump : https://medium.com/@cjoudrey/capturing-http-packets-the-hard-way-b9c799bfb6
+  - Toward an eBPF-based clone of iptables : 
+    - Slides : https://www.astrid-project.eu/images/Toward%20an%20eBPF-based%20clone%20of%20iptables.pdf
+    - Article complet : https://sebymiano.github.io/documents/21-Securing_Linux_with_a_Faster_and_Scalable_Iptables.pdf
+    
 
