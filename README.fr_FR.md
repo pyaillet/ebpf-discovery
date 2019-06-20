@@ -13,8 +13,7 @@ kernel : eBPF (ce n'est pas moi qui le dit mais [The New Stack](lien)).
 
 - BPF introduit par deux articles de 1992 et 1993
   - Objectif capture de paquets en userspace avec langage de capture
-- Linux 3.18 : extended BPF Virtual Machine:
-  - 
+- Linux 3.18 : extended BPF Virtual Machine
 
 Pour résumer, BPF est l'appellation d'origine. Linux a introduit l'appellation 
 eBPF et pour différencier de l'ancienne version celle-ci est parfois nommée
