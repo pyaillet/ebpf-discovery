@@ -83,6 +83,8 @@ comment il fonctionne.
 - JIT
 - Verifier
 
+Tracing events: /sys/kernel/debug/tracing/available_events
+
 ## Utilisation
 
 - bcc
@@ -106,6 +108,9 @@ avec la découverte de [Cilium](https://cilium.io/)
 - Articles :
   - What can BPF do for you ? : https://events.static.linuxfound.org/sites/events/files/slides/iovisor-lc-bof-2016.pdf
   - Awesome eBPF : https://github.com/zoidbergwill/awesome-ebpf
+  - How I ended up writing eBPF : https://bolinfest.github.io/opensnoop-native
+  - eBPF, past, present and future : https://ferrisellis.com/content/ebpf_past_present_future/
+  - eBPF, syscalls and map types : https://ferrisellis.com/content/ebpf_syscall_and_maps/
 
 - Actualité :
   - https://thenewstack.io/linux-technology-for-the-new-year-ebpf/
