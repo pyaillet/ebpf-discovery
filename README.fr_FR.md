@@ -76,7 +76,24 @@ Donc :
 ## Principe
 
 Maintenant, qu'on en connaît un peu plus sur l'historique du projet, voyons
-comment il fonctionne.
+comment il fonctionne...
+Tout est basé sur un appel système :
+
+```c
+#include <linux/bpf.h>
+
+int bpf(int cmd, union bpf_attr *attr, unsigned int size);
+```
+
+Le premier paramètre `cmd` indique l'action à réaliser, exemple : `BPF_PROG_LOAD`, pour charger un programme bpf.
+Le deuxième paramètre `attr` est une structure dépendant de la commande et
+portant les paramètres de l'action à réaliser.
+Le dernier paramètre `size` est la taille de la structure passée en deuxième
+paramètre.
+
+
+Afin d'échanger des informations 
+Les autres commandes utilisables avec BPF 
 
 - Machine virtuelle sandboxée
 - Jeu d'instruction
