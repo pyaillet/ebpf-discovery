@@ -122,6 +122,16 @@ struct {    /* Used by BPF_PROG_LOAD */
     };
 ```
 
+- `prog_type`, permet d'indiquer le type de programme et par quel type
+  d'événement il sera déclenché. 
+- `insn_cnt` indique le nombre d'instructions du programme
+- `ìnsns` pointe vers la liste des instructions
+- `license` indique la license du programme
+- les 3 attributs suivants (`log_level`, `log_size` et `log_buf`) permettent
+  d'obtenir des informations sur le chargement du programme et le résultat du
+  verifier.
+
+
 - Détail sur BPF_LOAD
   - prog type
   - prog content (utilisation de LLVM)
