@@ -77,6 +77,9 @@ Donc :
 
 Maintenant, qu'on en connaît un peu plus sur l'historique du projet, voyons
 comment il fonctionne...
+
+### Fonctionnement
+
 Tout est basé sur un appel système :
 
 ```c
@@ -85,35 +88,55 @@ Tout est basé sur un appel système :
 int bpf(int cmd, union bpf_attr *attr, unsigned int size);
 ```
 
-Le premier paramètre `cmd` indique l'action à réaliser, exemple : `BPF_PROG_LOAD`, pour charger un programme bpf.
-Le deuxième paramètre `attr` est une structure dépendant de la commande et
-portant les paramètres de l'action à réaliser.
+Le premier argument `cmd` indique l'action à réaliser, exemple : `BPF_PROG_LOAD`, pour charger un programme bpf.
+Le deuxième argument `attr` porte les paramètres de l'action à réaliser, sa structure dépend de la commande (valeur du premier argument).
 Le dernier paramètre `size` est la taille de la structure passée en deuxième
-paramètre.
+argument.
 
+Afin d'échanger des informations entre le programme BPF qui tourne dans
+l'espace du noyau et l'espace utilisateur. eBPF propose de créer et de
+manipuler des maps. Les autres commandes utilisables avec BPF sont dédiées à la
+manipulation de ces maps.
 
-Afin d'échanger des informations 
-Les autres commandes utilisables avec BPF 
+- Détail sur BPF_LOAD
+  - prog type
+  - prog content (utilisation de LLVM)
 
 - Machine virtuelle sandboxée
 - Jeu d'instruction
 - JIT
 - Verifier
 
+### BCC : BPF Compiler Collection
+
+Tout cela peut sembler un peu compliqué à mettre en oeuvre. Heureusement, il
+existe
+
 Tracing events: /sys/kernel/debug/tracing/available_events
 
-## Utilisation
+## Cas d'utilisation
 
-- bcc
+La technologie eBPF est en plein essor, le fait de pouvoir exécuter du code en
+mode kernel intéresse beaucoup, d'autant plus qu'avec eBPF, il n'est pas
+nécessaire de recompiler le noyau ou d'être spécialiste du développement de
+modules pour pouvoir le faire.
+Ainsi, le projet est utilisé pour :
 
+- De la capture d'événements du kernel, pour
+  - des mesures de performance
+  - du tracing
+- Du filtrage réseau :
+  - haute-performance (anti-DDOS, ...)
+  - avancé et dépendant du contexte
 
 ## Conclusion
 
 J'espère que ce petit tour d'horizon vous a donné envie d'aller plus loin.
 Si c'est le cas, n'hésitez pas à consulter les références que j'ai consultées
 pour le rédiger.
-Dans un prochain article nous détaillerons un cas d'utilisation plus précis
-avec la découverte de [Cilium](https://cilium.io/)
+Dans un prochain article nous aborderons [Cilium](https://cilium.io/) qui
+utilise cette technologie pour proposer une solution réseau multi-facette dans
+le contexte des conteneurs et notamment Kubernetes.
 
 ## Références
 
