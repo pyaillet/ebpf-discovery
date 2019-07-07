@@ -88,15 +88,39 @@ Tout est basé sur un appel système :
 int bpf(int cmd, union bpf_attr *attr, unsigned int size);
 ```
 
-Le premier argument `cmd` indique l'action à réaliser, exemple : `BPF_PROG_LOAD`, pour charger un programme bpf.
-Le deuxième argument `attr` porte les paramètres de l'action à réaliser, sa structure dépend de la commande (valeur du premier argument).
+Le premier argument `cmd` indique l'action à réaliser, exemple : 
+`BPF_PROG_LOAD`, pour charger un programme bpf.
+Le deuxième argument `attr` porte les paramètres de l'action à réaliser, sa
+structure dépend de la commande (valeur du premier argument).
 Le dernier paramètre `size` est la taille de la structure passée en deuxième
 argument.
 
-Afin d'échanger des informations entre le programme BPF qui tourne dans
-l'espace du noyau et l'espace utilisateur. eBPF propose de créer et de
-manipuler des maps. Les autres commandes utilisables avec BPF sont dédiées à la
+Les programmes eBPF sont événementiels, c'est à dire que leur exécution est
+déclenchée en réponse à des actions ou appels de fonctions internes du kernel.
+Afin de conserver des données entre les différentes exécutions du programme, 
+mais aussi afin d'échanger des informations entre le programme BPF qui tourne 
+dans l'espace du noyau et l'espace utilisateur, eBPF propose d'utiliser des maps. 
+Les autres commandes utilisables avec BPF sont dédiées à la création et à la 
 manipulation de ces maps.
+
+Mais avant d'aller plus loin, voyons comme sont chargés les programmes eBPF et
+comment ils sont reliés aux événements qui nous intéressent.
+Pour commencer voyons le détail de la structure qui porte les paramètres de
+l'appel à `BPF_PROG_LOAD` :
+
+```c
+struct {    /* Used by BPF_PROG_LOAD */ 
+        __u32         prog_type; 
+        __u32         insn_cnt; 
+        __aligned_u64 insns;      /* 'const struct bpf_insn *' */
+        __aligned_u64 license;    /* 'const char *' */ 
+        __u32         log_level;  /* verbosity level of verifier */
+        __u32         log_size;   /* size of user buffer */ 
+        __aligned_u64 log_buf;    /* user supplied 'char *' 
+                                     buffer */
+        [...]
+    };
+```
 
 - Détail sur BPF_LOAD
   - prog type
