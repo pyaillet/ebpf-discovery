@@ -123,7 +123,8 @@ struct {    /* Used by BPF_PROG_LOAD */
 ```
 
 - `prog_type`, permet d'indiquer le type de programme et par quel type
-  d'événement il sera déclenché. 
+  d'événement il sera déclenché. Par exemple, pour attacher un programme
+  à l'exécution d'une fonction on utilisera : `BPF_PROG_TYPE_KPROBE`.
 - `insn_cnt` indique le nombre d'instructions du programme
 - `ìnsns` pointe vers la liste des instructions
 - `license` indique la license du programme
@@ -131,20 +132,32 @@ struct {    /* Used by BPF_PROG_LOAD */
   d'obtenir des informations sur le chargement du programme et le résultat du
   verifier.
 
+À moins, que vous souhaitiez directement écrire le bytecode de votre programme,
+il sera préférable d'utiliser [LLVM](https://llvm.org/) afin de transformer le
+code C en bytecode bpf. Vous utiliserez alors une commande du type :
+`clang -O2 -emit-llvm -c bpf.c -o - | llc -march=bpf -filetype=obj -o bpf.o`
 
-- Détail sur BPF_LOAD
-  - prog type
-  - prog content (utilisation de LLVM)
-
-- Machine virtuelle sandboxée
-- Jeu d'instruction
-- JIT
-- Verifier
+Une fois la structure correctement alimentée et l'appel système effectué, le
+noyau prendra en charge votre programme qui subira encore quelques
+manipulations/transformations :
+- dans un premier temps, le verifier va s'assurer que le programme :
+  - ne comporte pas plus d'instructions que la limite (4096 en Linux 4.14)
+  - est un [Diagramme orienté acyclique](https://fr.wikipedia.org/wiki/Graphe_orient%C3%A9_acyclique).
+    C'est à dire, qu'il ne comporte pas de boucles.
+  - accède uniquement à des zones mémoires identifiées
+  - ...
+- ensuite, avant sa première exécution, le programme sera transformé de
+  bytecode eBPF vers le code natif de la plate-forme pour les [architectures
+  supportées](https://www.kernel.org/doc/Documentation/features/core/eBPF-JIT/arch-support.txt)
 
 ### BCC : BPF Compiler Collection
 
 Tout cela peut sembler un peu compliqué à mettre en oeuvre. Heureusement, il
-existe
+existe un outil qui simplifie grandement l'utilisation d'eBPF : 
+[BPF Compiler Collection](https://github.com/iovisor/bcc).
+Ce projet propose notamment un frontend python que nous allons utiliser pour
+mettre en oeuvre quelques exemples de programmes eBPF.
+
 
 Tracing events: /sys/kernel/debug/tracing/available_events
 
