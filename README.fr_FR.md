@@ -76,27 +76,114 @@ Donc :
 ## Principe
 
 Maintenant, qu'on en connaît un peu plus sur l'historique du projet, voyons
-comment il fonctionne.
+comment il fonctionne...
 
-- Machine virtuelle sandboxée
-- Jeu d'instruction
-- JIT
-- Verifier
+### Fonctionnement
+
+Tout est basé sur un appel système :
+
+```c
+#include <linux/bpf.h>
+
+int bpf(int cmd, union bpf_attr *attr, unsigned int size);
+```
+
+Le premier argument `cmd` indique l'action à réaliser, exemple : 
+`BPF_PROG_LOAD`, pour charger un programme bpf.
+Le deuxième argument `attr` porte les paramètres de l'action à réaliser, sa
+structure dépend de la commande (valeur du premier argument).
+Le dernier paramètre `size` est la taille de la structure passée en deuxième
+argument.
+
+Les programmes eBPF sont événementiels, c'est à dire que leur exécution est
+déclenchée en réponse à des actions ou appels de fonctions internes du kernel.
+Afin de conserver des données entre les différentes exécutions du programme, 
+mais aussi afin d'échanger des informations entre le programme BPF qui tourne 
+dans l'espace du noyau et l'espace utilisateur, eBPF propose d'utiliser des maps. 
+Les autres commandes utilisables avec BPF sont dédiées à la création et à la 
+manipulation de ces maps.
+
+Mais avant d'aller plus loin, voyons comme sont chargés les programmes eBPF et
+comment ils sont reliés aux événements qui nous intéressent.
+Pour commencer voyons le détail de la structure qui porte les paramètres de
+l'appel à `BPF_PROG_LOAD` :
+
+```c
+struct {    /* Used by BPF_PROG_LOAD */ 
+        __u32         prog_type; 
+        __u32         insn_cnt; 
+        __aligned_u64 insns;      /* 'const struct bpf_insn *' */
+        __aligned_u64 license;    /* 'const char *' */ 
+        __u32         log_level;  /* verbosity level of verifier */
+        __u32         log_size;   /* size of user buffer */ 
+        __aligned_u64 log_buf;    /* user supplied 'char *' 
+                                     buffer */
+        [...]
+    };
+```
+
+- `prog_type`, permet d'indiquer le type de programme et par quel type
+  d'événement il sera déclenché. Par exemple, pour attacher un programme
+  à l'exécution d'une fonction on utilisera : `BPF_PROG_TYPE_KPROBE`.
+- `insn_cnt` indique le nombre d'instructions du programme
+- `ìnsns` pointe vers la liste des instructions
+- `license` indique la license du programme
+- les 3 attributs suivants (`log_level`, `log_size` et `log_buf`) permettent
+  d'obtenir des informations sur le chargement du programme et le résultat du
+  verifier.
+
+À moins, que vous souhaitiez directement écrire le bytecode de votre programme,
+il sera préférable d'utiliser [LLVM](https://llvm.org/) afin de transformer le
+code C en bytecode bpf. Vous utiliserez alors une commande du type :
+`clang -O2 -emit-llvm -c bpf.c -o - | llc -march=bpf -filetype=obj -o bpf.o`
+
+Une fois la structure correctement alimentée et l'appel système effectué, le
+noyau prendra en charge votre programme qui subira encore quelques
+manipulations/transformations :
+- dans un premier temps, le verifier va s'assurer que le programme :
+  - ne comporte pas plus d'instructions que la limite (4096 en Linux 4.14)
+  - est un [Diagramme orienté acyclique](https://fr.wikipedia.org/wiki/Graphe_orient%C3%A9_acyclique).
+    C'est à dire, qu'il ne comporte pas de boucles.
+  - accède uniquement à des zones mémoires identifiées
+  - ...
+- ensuite, avant sa première exécution, le programme sera transformé de
+  bytecode eBPF vers le code natif de la plate-forme pour les [architectures
+  supportées](https://www.kernel.org/doc/Documentation/features/core/eBPF-JIT/arch-support.txt)
+
+### BCC : BPF Compiler Collection
+
+Tout cela peut sembler un peu compliqué à mettre en oeuvre. Heureusement, il
+existe un outil qui simplifie grandement l'utilisation d'eBPF : 
+[BPF Compiler Collection](https://github.com/iovisor/bcc).
+Ce projet propose notamment un frontend python que nous allons utiliser pour
+mettre en oeuvre quelques exemples de programmes eBPF.
+
 
 Tracing events: /sys/kernel/debug/tracing/available_events
 
-## Utilisation
+## Cas d'utilisation
 
-- bcc
+La technologie eBPF est en plein essor, le fait de pouvoir exécuter du code en
+mode kernel intéresse beaucoup, d'autant plus qu'avec eBPF, il n'est pas
+nécessaire de recompiler le noyau ou d'être spécialiste du développement de
+modules pour pouvoir le faire.
+Ainsi, le projet est utilisé pour :
 
+- De la capture d'événements du kernel, pour
+  - des mesures de performance
+  - du tracing
+- Du filtrage réseau :
+  - haute-performance (anti-DDOS, ...)
+  - avancé et dépendant du contexte
 
 ## Conclusion
 
 J'espère que ce petit tour d'horizon vous a donné envie d'aller plus loin.
 Si c'est le cas, n'hésitez pas à consulter les références que j'ai consultées
 pour le rédiger.
-Dans un prochain article nous détaillerons un cas d'utilisation plus précis
-avec la découverte de [Cilium](https://cilium.io/)
+Dans un prochain article nous aborderons [Cilium](https://cilium.io/) qui
+utilise cette technologie pour proposer une solution réseau multi-facette dans
+le contexte des conteneurs et notamment Kubernetes.
 
 ## Références
 
