@@ -158,8 +158,81 @@ existe un outil qui simplifie grandement l'utilisation d'eBPF :
 Ce projet propose notamment un frontend python que nous allons utiliser pour
 mettre en oeuvre quelques exemples de programmes eBPF.
 
+Pour commencer, assurez-vous d'avoir une machine linux avec un kernel récent 
+( =>4.15). Vous pouvez également utiliser [vagrant](https://www.vagrantup.com/)
+avec le
+[Vagrantfile](https://github.com/pyaillet/ebpf-discovery/blob/master/Vagrantfile)
+disponible sur le 
+[repository github](https://github.com/pyaillet/ebpf-discovery) contenant les 
+exemples de cet article.
 
-Tracing events: /sys/kernel/debug/tracing/available_events
+Ensuite installez les dépendances nécessaires (cette étape n'est pas nécessaire
+si vous utilisez vagrant) :
+```shell
+$ apt update
+$ apt install -y python python-pip bpfcc-tools
+```
+
+Pour tester avec un cas simple créez un fichier `first_trace.py` :
+```python
+#!/usr/bin/env python
+
+import os
+from bcc import BPF
+
+print('Launching in background, pid: ', os.getpid())
+
+# This may not work for 4.17 on x64, you need replace kprobe__sys_clone with kprobe____x64_sys_clone
+BPF(text='''
+int kprobe__sys_clone(void *ctx) {
+  bpf_trace_printk("Hello, eBPF!\\n");
+  return 0;
+}
+''').trace_print()
+```
+
+Ce script python va créer et un charger un programme eBPF à partir du code
+source passé en paramètre.
+Ce programme sera attaché au syscall clone qui est utilisé dès que l'on
+souhaite créer un nouveau processus.
+Lancez ce script en arrière plan avec la commande :
+`sudo ./first_trace.py &`
+
+Il est nécessaire de le lancer en tant que root afin de pouvoir utiliser
+l'appel système `bpf`.
+
+Vous pouvez éventuellement déjà voir des messages apparaître dès qu'un nouveau
+processus est créé.
+Vous pouvez également lancer le script ci-dessous qui créera un nouveau
+processus toutes les 3 secondes. Ce nouveau processus affiche un message et
+s'arrête.
+
+```python
+#!/usr/bin/env python
+
+import os
+import time
+
+def child():
+    print('New child ', os.getpid())
+    os._exit(0)
+
+def parent():
+    while True:
+        newpid = os.fork()
+        if newpid == 0:
+            child()
+        else:
+            time.sleep(3)
+            os.waitpid(newpid, 0)
+
+
+parent()
+```
+
+Une fois votre test effectué, lancez `sudo kill <pid>`, où vous remplacerez pid
+par l'identifiant du processus lancé en arrière plan qui s'est affiché après
+son lancement.
 
 ## Cas d'utilisation
 
